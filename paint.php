@@ -94,29 +94,6 @@ class PaintShop {
       echo 'Error: ' . $e->getMessage() . "\n";
       exit;
     }
-
-    // Sort data.
-    $this->preferencesSort();
-  }
-
-  /**
-   * Change user order to have minimum preferences at the top.
-   */
-  private function preferencesSort() {
-    // Sort users by preferences count.
-    usort($this->preferences, function ($x, $y) {
-      if ($x['variants'] == $y['variants']) {
-        return 0;
-      }
-      else {
-        if ($x['variants'] > $y['variants']) {
-          return 1;
-        }
-        else {
-          return -1;
-        }
-      }
-    });
   }
 
   /**

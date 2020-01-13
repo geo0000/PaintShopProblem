@@ -187,17 +187,15 @@ class PaintShop {
     $lastG = $lastM = FALSE;
 
     foreach ($this->preferences as $key => $userPreference) {
-      // first user preference.
-      $pref = $userPreference['pref'][$colorNumber];
-
-      if ($userPreference['variants'] == 1 && $pref == 'G') {
-        $lastG = TRUE;
+      if ($userPreference['pref'][$colorNumber] == '' || $userPreference['variants'] > 1) {
+        continue;
       }
 
-      if ($pref == 'M' && $userPreference['variants'] == 1) {
+      if ($userPreference['pref'][$colorNumber] == 'M') {
         $colorStyle = 'M';
-        $lastM = TRUE;
       }
+
+      ${'last' . $userPreference['pref'][$colorNumber]} = TRUE;
 
       if ($lastM && $lastG) {
         return FALSE;

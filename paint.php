@@ -231,18 +231,6 @@ class PaintShop {
   }
 
   /**
-   * Print user preferences.
-   */
-  public function printPreferences() {
-    foreach ($this->preferences as $userPreference) {
-      print $userPreference['variants'] . ' ';
-
-      print implode($userPreference['pref'], ' ');
-      echo "\n";
-    }
-  }
-
-  /**
    * Print results.
    */
   public function printColors() {

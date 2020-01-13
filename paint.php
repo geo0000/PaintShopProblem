@@ -61,6 +61,9 @@ class PaintShop {
         $line = explode(' ', $rows[$i]);
         $mCount = 0;
 
+        $this->preferences[$i]['pref'] = array_fill(1, $this->colorsCount, '');
+        $this->preferences[$i]['variants'] = 0;
+
         for ($j = 0; $j < count($line); $j = $j + 2) {
           // Check color number.
           $colorNumber = $line[$j];
@@ -79,15 +82,13 @@ class PaintShop {
               throw new Exception('More than 1 matte color for user ' . $i);
             }
 
-            $this->preferences[$i]['pref'][] = $colorNumber . $colorStyle;
+            $this->preferences[$i]['pref'][$colorNumber] = $colorStyle;
+            $this->preferences[$i]['variants']++;
           }
           else {
             throw new Exception('Please check color styles for user ' . $i);
           }
         }
-
-        $this->preferences[$i]['variants'] = count($this->preferences[$i]['pref']);
-
       }
     } catch (Exception $e) {
       echo 'Error: ' . $e->getMessage() . "\n";
@@ -116,28 +117,6 @@ class PaintShop {
         }
       }
     });
-
-    // Sort preferences for each user by color.
-    foreach ($this->preferences as $key => $userPreference) {
-      usort($userPreference['pref'], function ($x, $y) {
-        $colorX = (integer) $x;
-        $colorY = (integer) $y;
-
-        if ($colorX == $colorY) {
-          return 0;
-        }
-        else {
-          if ($colorX > $colorY) {
-            return 1;
-          }
-          else {
-            return -1;
-          }
-        }
-      });
-
-      $this->preferences[$key]['pref'] = $userPreference['pref'];
-    }
   }
 
   /**
@@ -151,7 +130,11 @@ class PaintShop {
     foreach ($this->preferences as $userPreference) {
       if ($userPreference['variants'] == 1) {
         // store color.
-        $colorNumber = (integer) $userPreference['pref'][0];
+
+        $positionM = array_search('M', $userPreference['pref']);
+        $positionG = array_search('G', $userPreference['pref']);
+
+        $colorNumber = ($positionM ? $positionM : $positionG);
 
         if (!in_array($colorNumber, $colorsOrder)) {
           $colorsOrder[] = $colorNumber;
@@ -202,21 +185,15 @@ class PaintShop {
    * @param $colorStyle string
    */
   private function removeColorsFromUsers($colorNumber, $colorStyle) {
-
-    $color = $colorNumber . $colorStyle;
-    $oppositeColor = $colorNumber . ($colorStyle == 'G' ? 'M' : 'G');
-
     foreach ($this->preferences as $key => $userPreference) {
-      // Satisfied user.
-      if (in_array($color, $userPreference['pref'])) {
-        unset($this->preferences[$key]);
-      }
+      if ($this->preferences[$key]['pref'][$colorNumber] !== '') {
+        // Satisfied user.
+        if ($userPreference['pref'][$colorNumber] == $colorStyle) {
+          unset($this->preferences[$key]);
+          continue;
+        }
 
-      // Remove color variant from user.
-      if (in_array($oppositeColor, $userPreference['pref'])) {
-        $keyToRemove = array_search($oppositeColor, $userPreference['pref']);
-
-        unset($this->preferences[$key]['pref'][$keyToRemove]);
+        unset($this->preferences[$key]['pref'][$colorNumber]);
         $this->preferences[$key]['variants']--;
       }
     }
@@ -233,21 +210,16 @@ class PaintShop {
     $lastG = $lastM = FALSE;
 
     foreach ($this->preferences as $key => $userPreference) {
-
       // first user preference.
-      $pref = reset($userPreference['pref']);
+      $pref = $userPreference['pref'][$colorNumber];
 
-      if ((integer) $pref == $colorNumber) {
-        $userColor = substr($pref, 1, 1);
+      if ($userPreference['variants'] == 1 && $pref == 'G') {
+        $lastG = TRUE;
+      }
 
-        if ($userPreference['variants'] == 1 && $userColor == 'G') {
-          $lastG = TRUE;
-        }
-
-        if ($userColor !== 'G' && $userPreference['variants'] == 1) {
-          $colorStyle = 'M';
-          $lastM = TRUE;
-        }
+      if ($pref == 'M' && $userPreference['variants'] == 1) {
+        $colorStyle = 'M';
+        $lastM = TRUE;
       }
 
       if ($lastM && $lastG) {
